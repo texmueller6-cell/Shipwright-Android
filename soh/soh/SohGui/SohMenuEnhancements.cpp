@@ -7,6 +7,19 @@
 #include <soh/Enhancements/Presets/Presets.h>
 #include <soh/Enhancements/TimeDisplay/TimeDisplay.h>
 
+void CheatExtras_SpawnRandomEnemy();
+void CheatExtras_SpawnRandomBurst();
+void CheatExtras_ApplyScale();
+void CheatExtras_ResetScale();
+void CheatExtras_KillAllEnemies();
+void CheatExtras_TeleportEnemiesToLink();
+void CheatExtras_HealLink();
+void CheatExtras_RefillMagic();
+void CheatExtras_EnemyShower();
+void CheatExtras_SpinEnemies();
+void CheatExtras_ChaosScale();
+void CheatExtras_MaxRupees();
+
 static std::string comboboxTooltip = "";
 static int32_t enhancementPresetSelected = ENHANCEMENT_PRESET_DEFAULT;
 bool isBetaQuestEnabled = false;
@@ -1584,6 +1597,97 @@ void SohMenu::AddMenuEnhancements() {
         .Options(FloatSliderOptions().Format("%.2f").Min(1.0f).Max(5.0f));
 
     path.column = SECTION_COLUMN_2;
+    AddWidget(path, "Spawn & Scale", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Spawn Random Enemy", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_SpawnRandomEnemy(); })
+        .Options(ButtonOptions().Tooltip("Spawns random enemies near Link."));
+    AddWidget(path, "Spawn Burst (10 enemies)", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_SpawnRandomBurst(); })
+        .Options(ButtonOptions().Tooltip("Spawns 10 random enemies around Link at once."));
+    AddWidget(path, "Enemies per Spawn: %d", WIDGET_CVAR_SLIDER_INT)
+        .CVar(CVAR_CHEAT("SpawnAmount"))
+        .Options(IntSliderOptions().Min(1).Max(10).DefaultValue(1));
+    AddWidget(path, "Auto-Spawn Enemies", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("AutoSpawnEnemies"))
+        .Options(CheckboxOptions().Tooltip("Spawns a random enemy on a timer."));
+    AddWidget(path, "Auto-Spawn Every %d s", WIDGET_CVAR_SLIDER_INT)
+        .CVar(CVAR_CHEAT("AutoSpawnSeconds"))
+        .Options(IntSliderOptions().Min(1).Max(60).DefaultValue(5));
+    AddWidget(path, "Actor Scale: %.2fx", WIDGET_CVAR_SLIDER_FLOAT)
+        .CVar(CVAR_CHEAT("ActorScale"))
+        .Options(FloatSliderOptions().Min(0.1f).Max(10.0f).DefaultValue(1.0f).Step(0.1f).Format("%.2fx"));
+    AddWidget(path, "Apply Scale to All Actors", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_ApplyScale(); })
+        .Options(ButtonOptions().Tooltip("Scales every actor (except Link) relative to its original size."));
+    AddWidget(path, "Reset Actor Scale", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_ResetScale(); })
+        .Options(ButtonOptions().Tooltip("Restores the original size of every actor."));
+    AddWidget(path, "Giant Link", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("GiantLink"))
+        .Options(CheckboxOptions().Tooltip("Scales Link with the Actor Scale slider. Experimental."));
+
+    AddWidget(path, "Powers", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Super Jump (hold A)", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("SuperJump"))
+        .Options(CheckboxOptions().Tooltip("Holding A while rising adds extra height."));
+    AddWidget(path, "Fly (hold R)", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("FlyWithR"))
+        .Options(CheckboxOptions().Tooltip("Holding R keeps Link rising."));
+
+    AddWidget(path, "Survival", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Heal Link", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_HealLink(); })
+        .Options(ButtonOptions().Tooltip("Fills health to full."));
+    AddWidget(path, "Auto Heal", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("AutoHeal"))
+        .Options(CheckboxOptions().Tooltip("Keeps health at full at all times."));
+    AddWidget(path, "Refill Magic", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_RefillMagic(); })
+        .Options(ButtonOptions().Tooltip("Fills the magic meter (if you have magic)."));
+    AddWidget(path, "Infinite Magic", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("InfiniteMagic"))
+        .Options(CheckboxOptions().Tooltip("Keeps magic full at all times."));
+
+    AddWidget(path, "Combat", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Kill All Enemies", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_KillAllEnemies(); })
+        .Options(ButtonOptions().Tooltip("Defeats every enemy in the room."));
+    AddWidget(path, "Teleport Enemies to Link", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_TeleportEnemiesToLink(); })
+        .Options(ButtonOptions().Tooltip("Moves every enemy in the room next to Link."));
+
+    AddWidget(path, "Extra", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Enemy Shower (10 falling)", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_EnemyShower(); })
+        .Options(ButtonOptions().Tooltip("Drops 10 random enemies on Link from above."));
+    AddWidget(path, "Spin Enemies", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_SpinEnemies(); })
+        .Options(ButtonOptions().Tooltip("Turns every enemy in the room to a random direction."));
+    AddWidget(path, "Chaos Scale", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_ChaosScale(); })
+        .Options(ButtonOptions().Tooltip("Gives every actor a random size between 0.5x and 2x."));
+    AddWidget(path, "Max Rupees (999)", WIDGET_BUTTON)
+        .Callback([](WidgetInfo& info) { CheatExtras_MaxRupees(); })
+        .Options(ButtonOptions().Tooltip("Sets rupees to 999. The wallet may limit how many are shown."));
+    AddWidget(path, "Auto Rupees", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("AutoRupees"))
+        .Options(CheckboxOptions().Tooltip("Keeps rupees at 999 at all times."));
+    AddWidget(path, "Invincibility", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("Invincibility"))
+        .Options(CheckboxOptions().Tooltip("Link takes no damage."));
+    AddWidget(path, "Slow Fall", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_CHEAT("SlowFall"))
+        .Options(CheckboxOptions().Tooltip("Halves the speed of Link's fall. Experimental."));
+    AddWidget(path, "Shotgun Arrows", WIDGET_SEPARATOR_TEXT);
+    AddWidget(path, "Shotgun Arrows", WIDGET_CVAR_CHECKBOX)
+        .CVar(CVAR_ENHANCEMENT("Shotgun.Enabled"))
+        .Options(CheckboxOptions().Tooltip("Each arrow Link shoots fires as a spread of pellets."));
+    AddWidget(path, "Pellets per Shot: %d", WIDGET_CVAR_SLIDER_INT)
+        .CVar(CVAR_ENHANCEMENT("Shotgun.Pellets"))
+        .Options(IntSliderOptions().Min(3).Max(9).Step(2).DefaultValue(5));
+    AddWidget(path, "Spread: %d", WIDGET_CVAR_SLIDER_INT)
+        .CVar(CVAR_ENHANCEMENT("Shotgun.Spread"))
+        .Options(IntSliderOptions().Min(256).Max(4096).Step(256).DefaultValue(2048));
     AddWidget(path, "Misc", WIDGET_SEPARATOR_TEXT);
     AddWidget(path, "No Clip", WIDGET_CVAR_CHECKBOX)
         .CVar(CVAR_CHEAT("NoClip"))
