@@ -21,7 +21,6 @@ import android.content.pm.PackageManager;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import android.os.Build;
-import android.view.WindowManager;
 import android.widget.Toast;
 
 import android.util.Log;
@@ -45,8 +44,6 @@ public class MainActivity extends SDLActivity{
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
-        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
 
         preferences = getSharedPreferences("com.dishii.soh.prefs",Context.MODE_PRIVATE);
 
@@ -133,16 +130,10 @@ public class MainActivity extends SDLActivity{
 
     // Check if storage permission is granted
     private boolean hasStoragePermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            // Android 11 and above
-            return Environment.isExternalStorageManager();
-        } else {
-            // Android 10 and below
-            return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
-                    == PackageManager.PERMISSION_GRANTED &&
-                    ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                            == PackageManager.PERMISSION_GRANTED;
-        }
+        return ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_GRANTED &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                        == PackageManager.PERMISSION_GRANTED;
     }
 
     private static final int STORAGE_PERMISSION_REQUEST_CODE = 2296;
@@ -184,7 +175,7 @@ public class MainActivity extends SDLActivity{
         if (!targetRootFolder.exists() || isMissingAssets || isMissingSohOtr) {
             new AlertDialog.Builder(this)
                     .setTitle("Setup Required")
-                    .setMessage("Some required files are missing. The app will create them (~1 minute). Press OK to begin.")
+                    .setMessage("Some required files are missing. The app will create them (~30s). Press OK to begin.")
                     .setCancelable(false)
                     .setPositiveButton("OK", (dialog, which) -> {
                         Executors.newSingleThreadExecutor().execute(() -> {
@@ -366,6 +357,7 @@ public class MainActivity extends SDLActivity{
     private FrameLayout leftJoystick;
     private ImageView leftJoystickKnob;
     private View overlayView;
+    private TouchLayoutEditor touchEditor;
 
     // Function to set up the controller overlay (inflate layout and initialize buttons)
     private void setupControllerOverlay() {
@@ -382,7 +374,6 @@ public class MainActivity extends SDLActivity{
         // Add overlay view to the main layout (you may need to add it to a container like FrameLayout)
         ViewGroup view = (ViewGroup) getContentView();
         view.addView(overlayView);
-        view.setKeepScreenOn(true);
 
         final ViewGroup buttonGroup = overlayView.findViewById(R.id.button_group);
 
@@ -436,6 +427,16 @@ public class MainActivity extends SDLActivity{
         setupLookAround(rightScreenArea);
 
         setupToggleButton(buttonToggle,buttonGroup);
+
+        // Layout personalizavel: segure o botao de mostrar/esconder para editar os controles
+        touchEditor = new TouchLayoutEditor(
+                (androidx.constraintlayout.widget.ConstraintLayout) overlayView,
+                buttonGroup,
+                preferences);
+        buttonToggle.setOnLongClickListener(v -> {
+            touchEditor.enterEditMode();
+            return true;
+        });
 
     }
 
